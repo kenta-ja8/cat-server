@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Cat Server</title>
+  <script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+  <script crossorigin src="https://unpkg.com/@material-ui/core@4.11.3/umd/material-ui.development.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <style type="text/css">
+    body {
+      background-color: rgb(216 216 208);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="main">
+    <div class="section" id="app1"></div>
+  </div>
+
+  <script type="text/babel">
+    const axiosInstance = axios.create({
+      headers:{
+        "Content-Type":"application/json"
+      }
+    });
+    const {
+      Button,
+      Fab,
+      Card, CardMedia, CardContent,
+      Modal, Fade, Backdrop,
+      TextField
+    } = MaterialUI;
+
+    class App extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = {
+          catList: [],
+          displayCat: null,
+          open: false,
+          newCat: {},
+          errorMessage: {},
+        }
+      }
+      handleOpen() {
+        this.setState({
+          open: true
+        })
+      }
+      handleClose() {
+        const self = this;
+        self.setState({
+          open: false
+        });
+        self.initialNewCat();
+      }
+      onNewCatInputchange(event) {
+        let newCat = this.state.newCat;
+        newCat[event.target.name] = event.target.value;
+        this.setState({
+          newCat
+        });
+      }
+
+      initialNewCat() {
+        this.setState({
+          newCat: {
+            "id": "",
+            "name": "",
+            "description": "",
+            "img_url": "",
+            "reference": ""
+          },
+          errorMessage:{
+            "id": "",
+            "name": "",
+            "description": "",
+            "img_url": "",
+            "reference": ""
+          }
+        })
+      }
+
+      componentDidMount() {
+        this.initialNewCat();
+        this.getCat();
+
+      }
+      render() {
+        return (
+          <div>
+            { this.state.displayCat &&
+              <div id="main">
+                <div id="content" style={{ height: "90vh", margin: "15px", "padding": "15px" }}>
+                  <div>
+                    <div style={{ "width": "80%"}}>
+                      <img src={this.state.displayCat.img_url} style={{ maxHeight: "80vh", minHeight:"80vh", borderRadius: "5px" }} />
+                    </div>
+                  </div>
+                  <div id="text-box" style={{ width: "40%", padding: "5px", backgroundColor: "rgb(247 247 247)", borderRadius: "5px", transform: "translate(0%,-50%)", marginLeft: "auto", boxShadow: "5px 5px 5px rgb(0 0 0 / 5%)", padding: "15px" }}>
+                    <div>
+                      <h2 style={{color: "rgb(63 80 181)"}}>Cat Information</h2>
+                      <ul>
+                        <li><b>ID: </b>{this.state.displayCat.id}</li>
+                        <li><b>Name: </b>{this.state.displayCat.name}</li>
+                        <li><b>Description: </b>{this.state.displayCat.description}</li>
+                        <li><a href={this.state.displayCat.reference}>Reference</a></li>
+                      </ul>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <Fab style={{ margin: "5px" }} color="primary" aria-label="refresh" onClick={this.displayNewCat.bind(this)}><i className="material-icons">refresh</i></Fab>
+                      <Fab style={{ margin: "5px" }} color="primary" aria-label="add" onClick={this.handleOpen.bind(this)}><i className="material-icons">add</i></Fab>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+            <div>
+              <Modal
+                aria-labelledby="transition-modal-title"
+                open={this.state.open}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onClose={this.handleClose.bind(this)}
+                closeAfterTransition
+                BackdropComponent={Backdrop}
+                BackdropProps={{
+                  timeout: 500,
+                }}
+              >
+                <Fade in={this.state.open}>
+                  <div style={{ backgroundColor: "white", padding: "20px", width:"50%", height:"60%" }}>
+                    <h2 id="transition-modal-title" style={{color: "rgb(63 80 181)"}}>New Cat Information</h2>
+                    <div style={{ margin: "30px" }}>
+                      <TextField error={!!this.state.errorMessage.id} helperText={this.state.errorMessage.id} fullWidth label="ID" name="id" autoComplete="off" onChange={this.onNewCatInputchange.bind(this)} value={this.state.newCat.id} style={{ margin: "5px" }} />
+                      <TextField error={!!this.state.errorMessage.name} helperText={this.state.errorMessage.name} fullWidth label="Name" name="name" autoComplete="off" onChange={this.onNewCatInputchange.bind(this)} style={{ margin: "5px" }} />
+                      <TextField error={!!this.state.errorMessage.description} helperText={this.state.errorMessage.description} fullWidth label="Description" name="description" autoComplete="off" onChange={this.onNewCatInputchange.bind(this)} style={{ margin: "5px" }} />
+                      <TextField error={!!this.state.errorMessage.img_url} helperText={this.state.errorMessage.img_url} fullWidth label="Image URL" name="img_url" autoComplete="off" onChange={this.onNewCatInputchange.bind(this)} style={{ margin: "5px" }} />
+                      <TextField error={!!this.state.errorMessage.reference} helperText={this.state.errorMessage.reference} fullWidth label="Reference URL" name="reference" autoComplete="off" onChange={this.onNewCatInputchange.bind(this)} style={{ margin: "5px" }} />
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <Button onClick={this.handleClose.bind(this)} variant="contained" style={{ margin: "2px" }}>Cancel</Button>
+                      <Button onClick={this.putCat.bind(this)} variant="contained" color="primary" style={{ margin: "2px" }}>Add</Button>
+                    </div>
+                  </div>
+                </Fade>
+              </Modal>
+            </div>
+          </div>
+        )
+      }
+      getCat() {
+        const self = this;
+        const newCatList = axiosInstance.get("/api/cat").then((response) => {
+          console.log(response);
+          self.setState({
+            catList: response.data,
+          });
+          self.displayNewCat();
+        });
+      }
+      putCat() {
+        const self = this;
+        console.log(this.state.newCat);
+        const result = axiosInstance.put("/api/cat", this.state.newCat)
+          .then((response) => {
+            console.log(response);
+            self.handleClose();
+            self.initialNewCat();
+          })
+          .catch((error) => {
+            const response = error.response.data;
+            console.log(response);
+            const errorMessage = {}
+            response.message_list.forEach(element => {
+              if(errorMessage[element.field]){
+                errorMessage[element.field] = errorMessage[element.field] + " " + element.message;
+              }else{
+                errorMessage[element.field] = element.message;
+              }
+            });
+            this.setState({
+              errorMessage
+            })
+          });
+      }
+      displayNewCat() {
+        const currentCatID = this.state.displayCat && this.state.displayCat.id;
+        let newCat = null
+        do {
+          const randomIndex = Math.floor(Math.random() * this.state.catList.length);
+          newCat = this.state.catList[randomIndex];
+          console.log(newCat)
+        } while (currentCatID == newCat.id);
+        this.setState({
+          displayCat: newCat
+        })
+      }
+    }
+    ReactDOM.render(<App />, document.getElementById('app1'));
+  </script>
+</body>
